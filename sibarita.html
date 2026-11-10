@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sibarita – Bar & Restaurante en La Habana</title>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --bg-accent: #161616;
+      --gold: #c9a657;
+      --gold-soft: #b8944e;
+      --gold-light: #d4b883;
+      --text: #f5f0e2;
+      --text-muted: #a0a0a0;
+      --card: #161616;
+      --border: #3a3a3a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: "Georgia", "Times New Roman", serif;
+      color: var(--gold);
+      line-height: 1.3;
+    }
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-light); }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 2; }
+
+    /* --- NAVEGACIÓN --- */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background: rgba(13, 13, 13, 0.85);
+      backdrop-filter: blur(8px);
+      padding: .8rem 0;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(201, 166, 87, 0.15);
+    }
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: .95rem;
+      color: var(--text);
+      font-weight: 500;
+      transition: color .2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:hover { color: var(--gold); }
+    .nav-links a.active::after {
+      content: "";
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--gold);
+    }
+
+    /* --- HERO CON FONDO INTERACTIVO DE BEBIDA / CÓCTEL SIRVIÉNDOSE --- */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem 1rem 3rem;
+      overflow: hidden;
+    }
+    #drinkCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(13,13,13,0.4) 0%, rgba(13,13,13,0.85) 80%, #0d0d0d 100%);
+      z-index: 2;
+      pointer-events: none;
+    }
+    #hero > *:not(#drinkCanvas) {
+      position: relative;
+      z-index: 3;
+    }
+    #hero h1 {
+      font-size: 3.8rem;
+      font-weight: normal;
+      letter-spacing: .25em;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    }
+    #hero p {
+      font-size: 1.25rem;
+      color: var(--text);
+      max-width: 680px;
+      margin: 0 auto 2rem;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+    .btn-cta {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--bg);
+      padding: .9rem 2rem;
+      border-radius: .4rem;
+      font-weight: 600;
+      margin: .5rem;
+      font-size: 1rem;
+      transition: background .2s, transform .1s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-cta:hover { background: var(--gold-light); transform: translateY(-2px); }
+    .btn-whatsapp { background: #25d366; color: #fff; }
+    .btn-whatsapp:hover { background: #128c7e; transform: translateY(-2px); }
+
+    /* --- SECCIONES --- */
+    section { padding: 5rem 0; opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+    section.visible { opacity: 1; transform: translateY(0); }
+    .section-title {
+      text-align: center;
+      font-size: 2.3rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 48px;
+      height: 4px;
+      background: var(--gold);
+      margin: .5rem auto 0;
+      border-radius: 2px;
+    }
+
+    /* --- FILTROS DE MENÚ --- */
+    .menu-filters {
+      display: flex;
+      justify-content: center;
+      gap: .8rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--bg-accent);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: .5rem 1.2rem;
+      border-radius: 2rem;
+      cursor: pointer;
+      font-size: .9rem;
+      transition: all .2s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--gold);
+      color: var(--bg);
+      border-color: var(--gold);
+      font-weight: 600;
+    }
+
+    /* --- MENÚ / CARTA --- */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .menu-card {
+      background: var(--card);
+      border-radius: .6rem;
+      padding: 1.5rem;
+      transition: transform .2s, box-shadow .2s;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      position: relative;
+    }
+    .menu-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,.4); border-color: var(--gold); }
+    .menu-card .img-wrap {
+      height: 160px;
+      border-radius: .4rem;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: "Georgia", serif;
+      font-size: 1.1rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,.5);
+    }
+    .menu-card.platillo .img-wrap { background: linear-gradient(135deg, #3a2e1f 0%, #1f1810 100%); }
+    .menu-card.bebida .img-wrap { background: linear-gradient(135deg, #1f2a3a 0%, #10151f 100%); }
+    .menu-card.postre .img-wrap { background: linear-gradient(135deg, #3a1f2e 0%, #1f1018 100%); }
+
+    .menu-card h3 { font-size: 1.2rem; margin-bottom: .4rem; }
+    .menu-card p { font-size: .9rem; color: var(--text-muted); margin-bottom: .8rem; }
+    .menu-card .price { font-family: "Georgia", serif; font-size: 1.3rem; color: var(--gold); display: block; }
+    .menu-card .price span { font-size: .85rem; color: var(--text-muted); margin-left: .4rem; }
+
+    /* --- MODAL DE PLATO INTERACTIVO --- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s ease;
+      padding: 1rem;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: var(--bg-accent);
+      border: 1px solid var(--gold);
+      border-radius: .8rem;
+      padding: 2rem;
+      max-width: 450px;
+      width: 100%;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform .3s ease;
+    }
+    .modal-overlay.open .modal-content { transform: scale(1); }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .modal-close:hover { color: var(--gold); }
+    .modal-content h3 { font-size: 1.6rem; margin-bottom: .5rem; }
+    .modal-content .modal-price { font-size: 1.4rem; color: var(--gold); font-family: "Georgia", serif; margin: 1rem 0; display: block; }
+    .modal-content p { color: var(--text-muted); margin-bottom: 1.5rem; }
+
+    /* --- GALERÍA --- */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .gallery-item {
+      background: var(--bg-accent);
+      border-radius: .5rem;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+      position: relative;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: .9rem;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    /* --- UBICACIÓN --- */
+    .location-info { max-width: 600px; margin: 0 auto; text-align: center; }
+    .location-info p { margin: .8rem 0; }
+    .location-info address { font-style: normal; }
+    .location-info .horario { color: var(--text-muted); margin-top: 1.5rem; }
+
+    /* --- CONTACTO / FORMULARIO --- */
+    .contact-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: .6rem;
+      padding: 2rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .contact-box h3 { text-align: center; margin-bottom: 1rem; }
+    .contact-box form { display: flex; flex-direction: column; gap: .9rem; }
+    .contact-box input,
+    .contact-box textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: .8rem 1rem;
+      border-radius: .4rem;
+      color: var(--text);
+      font-size: 1rem;
+      width: 100%;
+      font-family: inherit;
+    }
+    .contact-box input:focus, .contact-box textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+    .contact-box button {
+      background: var(--gold);
+      color: var(--bg);
+      border: none;
+      padding: .9rem;
+      border-radius: .4rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .contact-box button:hover { background: var(--gold-light); }
+    .form-success {
+      display: none;
+      background: rgba(46, 204, 113, 0.15);
+      border: 1px solid #2ecc71;
+      color: #2ecc71;
+      padding: 1rem;
+      border-radius: .4rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .whatsapp-btn-box { text-align: center; margin-top: 1rem; }
+    .whatsapp-link {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: #25d366;
+      color: #fff;
+      padding: .7rem 1.2rem;
+      border-radius: .4rem;
+      font-weight: 600;
+      font-size: .95rem;
+    }
+    .whatsapp-link:hover { background: #128c7e; color: #fff; }
+
+    /* --- FOOTER --- */
+    footer {
+      background: #0a0a0a;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 3rem 0 1.5rem;
+      margin-top: 4rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--gold); }
+
+    @media (max-width: 768px) {
+      #hero h1 { font-size: 2.5rem; letter-spacing: .15em; }
+      .nav-links { gap: 1rem; }
+      .section-title { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVEGACIÓN -->
+  <nav>
+    <div class="container">
+      <ul class="nav-links">
+        <li><a href="#hero" class="active">Inicio</a></li>
+        <li><a href="#menu">Menú</a></li>
+        <li><a href="#about">Sobre</a></li>
+        <li><a href="#gallery">Galería</a></li>
+        <li><a href="#location">Ubicación</a></li>
+        <li><a href="#contact">Contacto</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO CON FONDO INTERACTIVO DE CÓCTEL SIRVIÉNDOSE -->
+  <header id="hero">
+    <canvas id="drinkCanvas"></canvas>
+    <div class="hero-overlay"></div>
+    <h1>Sibarita</h1>
+    <p>Bar & Restaurante – Cocina cubana de autor y coctelería Tiki en el corazón de La Habana</p>
+    <div>
+      <a href="https://wa.me/5353727632?text=Hola%20Sibarita%20%7C%20Deseo%20hacer%20una%20reserva" class="btn-cta btn-whatsapp" target="_blank">Reservar por WhatsApp</a>
+      <a href="#menu" class="btn-cta">Explorar Carta</a>
+    </div>
+  </header>
+
+  <!-- SOBRE NOSOTROS -->
+  <section id="about">
+    <div class="container">
+      <h2 class="section-title">Sobre Sibarita</h2>
+      <p style="max-width: 800px; margin: 0 auto; text-align: center; color: var(--text-muted);">
+        Sibarita nace del amor por la cocina cubana y la pasión por la innovación gastronómica.
+        Cada plato combina ingredientes locales con técnicas internacionales, creando una experiencia
+        única que celebra el sabor y la creatividad. Nuestro ambiente cálido e íntimo, con música
+        en vivo y los mejores cócteles Tiki de la ciudad, está ubicado en una ubicación privilegiada
+        de La Habana. Según TripAdvisor, somos el lugar #1 para una cena inolvidable en la ciudad.
+      </p>
+    </div>
+  </section>
+
+  <!-- MENÚ / CARTA -->
+  <section id="menu">
+    <div class="container">
+      <h2 class="section-title">Nuestra Carta</h2>
+
+      <!-- Botones interactivos de filtrado -->
+      <div class="menu-filters">
+        <button class="filter-btn active" data-filter="all">Todos</button>
+        <button class="filter-btn" data-filter="platillo">Platillos</button>
+        <button class="filter-btn" data-filter="bebida">Bebidas</button>
+        <button class="filter-btn" data-filter="postre">Postres</button>
+      </div>
+
+      <div class="menu-grid" id="menuGrid">
+        <!-- 1 -->
+        <article class="menu-card platillo" onclick="openDishModal('Tartar de Atún', 'Atún fresco del día, mango natural, vinagreta de maracuyá y micro-brotes frescos.', '22€')">
+          <div class="img-wrap">Tartar de Atún</div>
+          <h3>Tartar de Atún</h3>
+          <p>Atún fresco del día, mango natural, vinagreta de maracuyá y micro‑brotes.</p>
+          <span class="price">22€ <span>/ persona</span></span>
+        </article>
+
+        <!-- 2 -->
+        <article class="menu-card platillo" onclick="openDishModal('Ceviche de Camarón', 'Camarón marinado en cítricos, piña asada, cilantro y toque de ají cubano.', '18€')">
+          <div class="img-wrap">Ceviche de Camarón</div>
+          <h3>Ceviche de Camarón</h3>
+          <p>Camarón marinado en cítricos, piña asada, cilantro y ají cubano.</p>
+          <span class="price">18€ <span>/ persona</span></span>
+        </article>
+
+        <!-- 3 -->
+        <article class="menu-card platillo" onclick="openDishModal('Lechón Asado', 'Lechón marinado en mojo criollo tradicional, yuca con mojo y ensalada fresca.', '35CUP')">
+          <div class="img-wrap">Lechón Asado</div>
+          <h3>Lechón Asado</h3>
+          <p>Lechón marinado en mojo criollo, yuca con mojo y ensalada camagüeyana.</p>
+          <span class="price">35CUP <span>/ porción</span></span>
+        </article>
+
+        <!-- 4 -->
+        <article class="menu-card platillo" onclick="openDishModal('Rabo de Buey', 'Rabo de buey guisado lento durante 6 horas, salsa de tomate criollo y plátano frito.', '30CUP')">
+          <div class="img-wrap">Rabo de Buey</div>
+          <h3>Rabo de Buey</h3>
+          <p>Rabo de buey guisado lento, salsa de tomate criollo y plátano frito.</p>
+          <span class="price">30CUP <span>/ plato</span></span>
+        </article>
+
+        <!-- 5 -->
+        <article class="menu-card bebida" onclick="openDishModal('Coctel Habana Sunset', 'Ron cubano añejo, licor de guayaba, jugo de piña, bitter de naranja y sal marina.', '15CUP')">
+          <div class="img-wrap">Habana Sunset</div>
+          <h3>Coctel “Habana Sunset”</h3>
+          <p>Ron cubano, licor de guayaba, jugo de piña, bitter de naranja y sal marina.</p>
+          <span class="price">15CUP <span>/ copa</span></span>
+        </article>
+
+        <!-- 6 -->
+        <article class="menu-card bebida" onclick="openDishModal('Vino Tinto Reserva', 'Selección especial de añadas recomendadas por nuestro sommelier.', '12CUP')">
+          <div class="img-wrap">Vino Tinto</div>
+          <h3>Vino Tinto Reserva</h3>
+          <p>Selección de añadas de la región vinícola de Cuba disponible por copa.</p>
+          <span class="price">12CUP <span>/ copa</span></span>
+        </article>
+
+        <!-- 7 -->
+        <article class="menu-card postre" onclick="openDishModal('Flan de Huevo', 'Flan artesanal extremadamente cremoso con caramelo de azúcar moreno y nuez moscada.', '10CUP')">
+          <div class="img-wrap">Flan de Huevo</div>
+          <h3>Flan de Huevo</h3>
+          <p>Flan cremoso con caramelo de azúcar moreno y nuez moscada.</p>
+          <span class="price">10CUP <span>/ porción</span></span>
+        </article>
+
+        <!-- 8 -->
+        <article class="menu-card postre" onclick="openDishModal('Tarta de Guayaba', 'Tarta casera con crema de queso delicada y compota de guayaba fresca.', '12CUP')">
+          <div class="img-wrap">Tarta de Guayaba</div>
+          <h3>Tarta de Guayaba</h3>
+          <p>Tarta con crema de queso y compota de guayaba fresca.</p>
+          <span class="price">12CUP <span>/ porción</span></span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL DE PLATO INTERACTIVO -->
+  <div class="modal-overlay" id="dishModal" onclick="closeDishModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-close" onclick="closeDishModal()">×</button>
+      <h3 id="modalTitle">Título del Plato</h3>
+      <span class="modal-price" id="modalPrice">0.00</span>
+      <p id="modalDesc">Descripción detallada del plato seleccionado.</p>
+      <a href="#" id="modalWhatsApp" class="btn-cta btn-whatsapp" style="display: block; text-align: center;" target="_blank">Pedir / Consultar por WhatsApp</a>
+    </div>
+  </div>
+
+  <!-- GALERÍA -->
+  <section id="gallery">
+    <div class="container">
+      <h2 class="section-title">Galería del Local</h2>
+      <div class="gallery-grid">
+        <div class="gallery-item">Presentación de Entradas</div>
+        <div class="gallery-item">Bar y Coctelería Tiki</div>
+        <div class="gallery-item">Platillo Principal en Mesa</div>
+        <div class="gallery-item">Coctel Habana Sunset</div>
+        <div class="gallery-item">Ambiente Nocturno</div>
+        <div class="gallery-item">Terraza con Vistas</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- UBICACIÓN Y HORARIOS -->
+  <section id="location">
+    <div class="container">
+      <div class="location-info">
+        <h2 class="section-title">Ubicación y Horarios</h2>
+        <address>
+          <p><strong>Dirección:</strong> <dato pendiente: Calle, Número y Municipio>, La Habana, Cuba</dato></p>
+          <p><a href="https://www.google.com/maps/search/?q=Sibarita+La+Habana" target="_blank">Ver ubicación exacta en Google Maps</a></p>
+          <p><strong>Teléfono:</strong> <dato pendiente: Teléfono> <a href="tel:+5353727632">+53 53 727 632</a></dato></p>
+        </address>
+        <div class="horario">
+          <p><strong>Lunes a Jueves:</strong> <dato pendiente: Horario>12:00 – 00:00</dato></p>
+          <p><strong>Viernes y Sábado:</strong> <dato pendiente: Horario>12:00 – 02:00</dato></p>
+          <p><strong>Domingos:</strong> <dato pendiente: Horario>13:00 – 23:00</dato></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACTO / RESERVAS -->
+  <section id="contact">
+    <div class="container">
+      <div class="contact-box">
+        <h3>Reserva o Consulta</h3>
+        <form id="reservationForm" onsubmit="handleFormSubmit(event)">
+          <input type="text" id="userName" placeholder="Tu nombre" required>
+          <input type="email" id="userEmail" placeholder="Tu correo electrónico" required>
+          <textarea id="userMsg" rows="4" placeholder="Fecha, hora y número de comensales" required></textarea>
+          <button type="submit">Enviar solicitud de reserva</button>
+        </form>
+        <div id="formSuccess" class="form-success">
+          ¡Gracias! Solicitud enviada con éxito. Nos pondremos en contacto contigo de inmediato.
+        </div>
+        <div class="whatsapp-btn-box">
+          <a href="https://wa.me/5353727632?text=Hola%20Sibarita%2C%20quisiera%20hacer%20una%20consulta" class="whatsapp-link" target="_blank">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17 2H3c-1.1 0-2 .9-2 2v4h4V5c0-1.1.9-2 2-2h6v14H7v4h5v-4h2v4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM16 6H8c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h2v-4h4v4h2v-4h4c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+            Escribir directo al WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      © 2025 Sibarita – Bar & Restaurante · Todos los derechos reservados<br>
+      <a href="https://www.tripadvisor.es/Restaurant_Review-g147271-d24934247-Reviews-or10-Sibarita_Habana-Havana_Ciudad_de_la_Habana_Province_Cuba.html" target="_blank">TripAdvisor #1</a> ·
+      <a href="https://www.instagram.com/sibarita.havana/" target="_blank">Instagram Oficial</a>
+    </div>
+  </footer>
+
+  <!-- SCRIPT DE INTERACTIVIDAD Y FONDO DINÁMICO (CÓCTEL SIRVIÉNDOSE / LÍQUIDOS) -->
+  <script>
+    /* --- FONDO ANIMADO: CÓCTEL LLENÁNDOSE Y BURBUJAS INTERACTIVAS --- */
+    const canvas = document.getElementById('drinkCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Partículas de líquido / burbujas que ascienden y responden al mouse
+    const particles = [];
+    const numParticles = 60;
+
+    for (let i = 0; i < numParticles; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 4 + 1,
+        speedY: Math.random() * 1.2 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.5,
+        alpha: Math.random() * 0.5 + 0.2,
+        color: Math.random() > 0.4 ? '#c9a657' : '#ff6b35' // Dorado o destello ámbar
+      });
+    }
+
+    let mouse = { x: null, y: null, active: false };
+    window.addEventListener('mousemove', e => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.active = true;
+    });
+    window.addEventListener('mouseleave', () => {
+      mouse.active = false;
+    });
+
+    // Simulación del nivel de líquido llenándose en el fondo (onda fluida)
+    let waveAngle = 0;
+
+    function animateDrinkBackground() {
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Nivel de líquido subiendo/bajando suavemente en la parte inferior (efecto cóctel vertiéndose)
+      waveAngle += 0.02;
+      let waveHeight = height * 0.35 + Math.sin(waveAngle) * 30;
+
+      let grad = ctx.createLinearGradient(0, height - waveHeight, 0, height);
+      grad.addColorStop(0, 'rgba(201, 166, 87, 0.08)');
+      grad.addColorStop(1, 'rgba(255, 107, 53, 0.15)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, height);
+      for (let x = 0; x <= width; x += 40) {
+        let y = (height - waveHeight) + Math.sin(x * 0.005 + waveAngle) * 15;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(width, height);
+      ctx.closePath();
+      ctx.fill();
+
+      // 2. Dibujar y actualizar burbujas / cubitos / gotas flotantes
+      particles.forEach(p => {
+        p.y -= p.speedY;
+        p.x += p.speedX;
+
+        // Si la burbuja llega arriba, reiniciar abajo
+        if (p.y < 0) {
+          p.y = height + 10;
+          p.x = Math.random() * width;
+        }
+
+        // Interactividad con el mouse: repeler ligeramente las burbujas cercanas
+        if (mouse.active && mouse.x && mouse.y) {
+          let dx = p.x - mouse.x;
+          let dy = p.y - mouse.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            let angle = Math.atan2(dy, dx);
+            p.x += Math.cos(angle) * 2;
+            p.y += Math.sin(angle) * 2;
+          }
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      });
+
+      requestAnimationFrame(animateDrinkBackground);
+    }
+    animateDrinkBackground();
+
+
+    /* --- 1. Filtros de Menú --- */
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const menuCards = document.querySelectorAll('.menu-card');
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.getAttribute('data-filter');
+
+        menuCards.forEach(card => {
+          if (filter === 'all' || card.classList.contains(filter)) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    /* --- 2. Modal Interactivo de Plato --- */
+    function openDishModal(name, desc, price) {
+      document.getElementById('modalTitle').innerText = name;
+      document.getElementById('modalDesc').innerText = desc;
+      document.getElementById('modalPrice').innerText = price;
+
+      const waLink = `https://wa.me/5353727632?text=Hola%20Sibarita%2C%20estoy%20interesado%20en%20el%20plato%3A%20${encodeURIComponent(name)}%20(${price})`;
+      document.getElementById('modalWhatsApp').setAttribute('href', waLink);
+
+      document.getElementById('dishModal').classList.add('open');
+    }
+
+    function closeDishModal(e) {
+      if (!e || e.target.id === 'dishModal' || e.target.classList.contains('modal-close')) {
+        document.getElementById('dishModal').classList.remove('open');
+      }
+    }
+
+    /* --- 3. Simulador de Formulario --- */
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const form = document.getElementById('reservationForm');
+      const successMsg = document.getElementById('formSuccess');
+
+      form.style.display = 'none';
+      successMsg.style.display = 'block';
+    }
+
+    /* --- 4. Animación Reveal on Scroll & Nav Active --- */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('section').forEach(sec => observer.observe(sec));
+
+    const navLinks = document.querySelectorAll('.nav-links a');
+    window.addEventListener('scroll', () => {
+      let fromTop = window.scrollY + 150;
+      navLinks.forEach(link => {
+        let section = document.querySelector(link.getAttribute('href'));
+        if (section && section.offsetTop <= fromTop && section.offsetTop + section.offsetHeight > fromTop) {
+          navLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
